@@ -4,16 +4,16 @@ import { useFrame } from "@react-three/fiber";
 import { Select } from "@react-three/postprocessing";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
+// import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 
-type GLTFResult = GLTF & {
-  nodes: {
-    Root: THREE.Object3D;
-    planet001: THREE.Object3D;
-    planet001_1: THREE.Mesh;
-    planet001_2: THREE.Mesh;
-  };
-};
+// type GLTFResult = GLTF & {
+//   nodes: {
+//     Root: THREE.Object3D;
+//     planet001: THREE.Object3D;
+//     planet001_1: THREE.Mesh;
+//     planet001_2: THREE.Mesh;
+//   };
+// };
 
 const PlanetRocket = () => {
   const planet = useRef<any>();
@@ -26,7 +26,7 @@ const PlanetRocket = () => {
     config: config.gentle,
   });
 
-  const { nodes } = useGLTF("/planet-rocket.glb") as unknown as GLTFResult;
+  const { nodes } = useGLTF("/planet-rocket.glb") as unknown as any;
   useFrame(({ clock }) => {
     const a = clock.getElapsedTime() / 10;
     planet.current.rotation.z = Math.PI / 5.6 + a;

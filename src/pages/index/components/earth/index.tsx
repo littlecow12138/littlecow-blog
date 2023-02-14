@@ -1,24 +1,24 @@
 import { useGLTF } from "@react-three/drei";
-import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
+// import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 import { animated, useSpring, config } from "@react-spring/three";
 import { useFrame } from "@react-three/fiber";
 import { useRef, useState } from "react";
 import { Group } from "three";
 import { Select } from "@react-three/postprocessing";
 
-type GLTFResult = GLTF & {
-  nodes: {
-    Root: THREE.Object3D;
-    "URF-Height_Lampd_0": THREE.Mesh;
-    "URF-Height_Lampd_Ice_0": THREE.Mesh;
-    "URF-Height_watr_0": THREE.Mesh;
-  };
-};
+// type GLTFResult = GLTF & {
+//   nodes: {
+//     Root: THREE.Object3D;
+//     "URF-Height_Lampd_0": THREE.Mesh;
+//     "URF-Height_Lampd_Ice_0": THREE.Mesh;
+//     "URF-Height_watr_0": THREE.Mesh;
+//   };
+// };
 
 const Earth = () => {
   const earth = useRef<Group>(new Group());
   const [active, setActive] = useState<boolean>(false);
-  const { nodes } = useGLTF("/lowpoly_earth.glb") as unknown as GLTFResult;
+  const { nodes } = useGLTF("/lowpoly_earth.glb") as unknown as any;
   const { scale } = useSpring({
     scale: active ? 1.5 : 1,
     config: config.gentle,
