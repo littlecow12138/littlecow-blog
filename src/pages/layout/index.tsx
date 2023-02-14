@@ -1,9 +1,14 @@
+import Background from "./components/background";
 import styles from "./index.module.less";
 
-console.log(styles);
-
-const Layout = () => {
-  return <div className={styles.container}>Layout</div>;
+const IndexPage = () => {
+  return (
+    <div className={styles.container}>
+      <div className={styles.background}>
+        <Background />
+      </div>
+    </div>
+  );
 };
 
-export default Layout;
+export default IndexPage;
