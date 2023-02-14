@@ -7,6 +7,9 @@
 /// <reference types="@react-spring/three" />
 /// <reference types="@react-spring/postprocessing" />
 /// <reference types="react-router-dom" />
+/// <reference types="three/examples/jsm/loaders/GLTFLoader" />
+
+// declare module "three/examples/jsm/loaders/GLTFLoader";
 
 declare namespace NodeJS {
   interface ProcessEnv {
