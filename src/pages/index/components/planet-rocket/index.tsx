@@ -4,7 +4,7 @@ import { useFrame } from "@react-three/fiber";
 import { Select } from "@react-three/postprocessing";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
+import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 
 type GLTFResult = GLTF & {
   nodes: {
@@ -34,7 +34,7 @@ const PlanetRocket = () => {
   return (
     <group
       onClick={() => {
-        navigate("/");
+        navigate("/indexno");
       }}
     >
       <animated.group position={[-10, 4, -5]} scale={fontScale}>

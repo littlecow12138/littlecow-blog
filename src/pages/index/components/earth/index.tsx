@@ -1,5 +1,5 @@
 import { useGLTF } from "@react-three/drei";
-import { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
+import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 import { animated, useSpring, config } from "@react-spring/three";
 import { useFrame } from "@react-three/fiber";
 import { useRef, useState } from "react";

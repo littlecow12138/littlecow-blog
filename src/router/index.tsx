@@ -5,11 +5,11 @@ import Layout from "../pages/index";
 const routes: RouteObject[] = [
   {
     path: "/",
-    element: <IndexPage />,
+    element: <Layout />,
   },
   {
     path: "/index",
-    element: <Layout />,
+    element: <IndexPage />,
   },
 ];
 
