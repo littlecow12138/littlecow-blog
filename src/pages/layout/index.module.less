@@ -2,10 +2,53 @@
   position: relative;
   width: 100%;
   height: 100%;
-  background-color: #054;
-  .background {
+  display: flex;
+  .header {
     position: absolute;
-    width: 100%;
+    width: calc(100% - 0rem);
+    top: 0;
+    z-index: 99;
+    display: flex;
+    .logo {
+      //   width: 50%;
+      //   min-width: 520px;
+      padding: 1.25rem 2.5rem;
+      flex: 1 1;
+      font-size: 1.75rem;
+      font-weight: 700;
+      span:nth-child(1) {
+        color: #d8bfc9;
+      }
+    }
+    .navMenu {
+      //   width: 50%;
+      //   min-width: 520px;
+      padding: 1.25rem 2.5rem;
+      flex: 1 1;
+      .menuItem {
+        display: inline-block;
+        cursor: pointer;
+        padding: 0.5rem 0.75rem;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #3e3e3d;
+        &:hover {
+          background-color: #fff;
+          border-radius: 0.5rem;
+        }
+      }
+    }
+  }
+  .background {
+    width: 50%;
+    // min-width: 520px;
     height: 100%;
+  }
+  .content {
+    // min-width: 520px;
+    width: calc(50% - 2.5rem);
+    height: calc(100%-4.5rem);
+    background-color: #fff;
+    padding: 4.5rem 1.25rem 0 1.25rem;
   }
 }

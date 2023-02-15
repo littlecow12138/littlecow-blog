@@ -114,7 +114,7 @@ const Background = () => {
       >
         <color attach="background" args={["lightblue"]} />
         <Bg />
-        <Diamonds />
+        <Diamonds count={10} />
         <EffectComposer>
           <Bloom
             luminanceThreshold={0.8}

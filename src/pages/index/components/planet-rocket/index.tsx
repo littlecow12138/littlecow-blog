@@ -34,7 +34,7 @@ const PlanetRocket = () => {
   return (
     <group
       onClick={() => {
-        navigate("/indexno");
+        navigate("/index");
       }}
     >
       <animated.group position={[-10, 4, -5]} scale={fontScale}>
