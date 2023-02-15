@@ -32,20 +32,10 @@ const IndexPage = () => {
             }}
           >
             <span>Jankin </span>
-
             <span>Sun</span>
           </span>
         </div>
         <div className={styles.navMenu}>
-          {/* <div
-            className={styles.menuItem}
-            onClick={() => {
-              setActive(true);
-              setCurPage("index");
-            }}
-          >
-            Jankin
-          </div> */}
           <div
             className={styles.menuItem}
             onClick={() => {
