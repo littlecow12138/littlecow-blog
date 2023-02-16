@@ -39,7 +39,7 @@ const PlanetRocket = () => {
     >
       <animated.group position={[-10, 4, -5]} scale={fontScale}>
         <Float floatIntensity={5} speed={5}>
-          <Text3D font={"/fonts/BangFontWanKu_Regular.json"}>主页</Text3D>
+          <Text3D font={"/fonts/Rainbow 2000_Regular.json"}>Index</Text3D>
         </Float>
       </animated.group>
       <Select enabled={active}>

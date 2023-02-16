@@ -33,24 +33,31 @@
         padding: 0.5rem 0.75rem;
         font-size: 1.25rem;
         font-weight: 700;
-        color: #3e3e3d;
+        // color: #3e3e3d;
+        color: #efefef;
         &:hover {
-          background-color: #fff;
+          //   background-color: #fff;
           border-radius: 0.5rem;
         }
       }
     }
   }
   .background {
+    left: 50%;
     width: 50%;
     // min-width: 520px;
     height: 100%;
+    position: absolute;
+    z-index: -1;
   }
-  .content {
+  .contentWrapper {
     // min-width: 520px;
-    width: calc(50% - 2.5rem);
+    width: calc(50%);
     height: calc(100%-4.5rem);
     background-color: #fff;
-    padding: 4.5rem 1.25rem 0 1.25rem;
+    padding: 4.5rem 0 0 0;
+    .content {
+      padding: 0 1.25rem;
+    }
   }
 }

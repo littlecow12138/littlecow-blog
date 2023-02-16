@@ -1,6 +1,8 @@
 import {
   CubeCamera,
   MeshRefractionMaterial,
+  PerspectiveCamera,
+  Stars,
   useGLTF,
   useTexture,
 } from "@react-three/drei";
@@ -15,6 +17,7 @@ import * as THREE from "three";
 import { InstancedMesh, Texture } from "three";
 import textureUrl from "../../../../assets/233.jpg";
 import diamondUrl from "../../../../assets/dflat.glb";
+import PlanetRocket from "../../../index/components/planet-rocket";
 
 const Bg = () => {
   const texture = useTexture(textureUrl);
@@ -110,8 +113,10 @@ const Background = () => {
     <Suspense fallback={null}>
       <Canvas
         // dpr={[1, 1.5]}
-        camera={{ position: [0, 0, 25], near: 1, far: 100, fov: 50 }}
+        shadows
+        camera={{ position: [25, 0, 25], near: 1, far: 100, fov: 50 }}
       >
+        <pointLight intensity={10} />
         <color attach="background" args={["lightblue"]} />
         <Bg />
         <Diamonds count={10} />

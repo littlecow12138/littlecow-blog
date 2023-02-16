@@ -3,6 +3,7 @@ import Background from "./components/background";
 import styles from "./index.module.less";
 import { animated, useSpring } from "@react-spring/web";
 import DocsPage from "./docs";
+import RagDoll from "./components/ragdoll";
 
 const IndexPage = () => {
   const [active, setActive] = useState<boolean>(false);
@@ -10,9 +11,6 @@ const IndexPage = () => {
 
   const contentStyles = useSpring({
     width: active ? "100%" : "50%",
-  });
-  const bgStyles = useSpring({
-    width: active ? "0%" : "50%",
   });
 
   const renderContent = () => {
@@ -47,11 +45,12 @@ const IndexPage = () => {
           </div>
         </div>
       </div>
-      <animated.div className={styles.content} style={contentStyles}>
-        {renderContent()}
+      <animated.div className={styles.contentWrapper} style={contentStyles}>
+        <div className={styles.content}>{renderContent()}</div>
       </animated.div>
-      <animated.div className={styles.background} style={bgStyles}>
-        <Background />
+      <animated.div className={styles.background}>
+        {/* <Background /> */}
+        <RagDoll />
       </animated.div>
     </div>
   );
