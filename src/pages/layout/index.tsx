@@ -4,6 +4,7 @@ import styles from "./index.module.less";
 import { animated, useSpring } from "@react-spring/web";
 import DocsPage from "./docs";
 import RagDoll from "./components/ragdoll";
+import ExamplePage from "./examples";
 
 const IndexPage = () => {
   const [active, setActive] = useState<boolean>(false);
@@ -16,6 +17,7 @@ const IndexPage = () => {
   const renderContent = () => {
     if (curPage === "index") return <div>index</div>;
     if (curPage === "docs") return <DocsPage />;
+    if (curPage === "examples") return <ExamplePage />;
     return <div>ERROR</div>;
   };
 
@@ -40,17 +42,30 @@ const IndexPage = () => {
               setActive(true);
               setCurPage("docs");
             }}
+            style={{ background: curPage === "docs" ? "#d8bfc9" : "none" }}
           >
             Docs
+          </div>
+          <div
+            className={styles.menuItem}
+            onClick={() => {
+              setActive(true);
+              setCurPage("examples");
+            }}
+            style={{ background: curPage === "examples" ? "#d8bfc9" : "none" }}
+          >
+            Examples
           </div>
         </div>
       </div>
       <animated.div className={styles.contentWrapper} style={contentStyles}>
         <div className={styles.content}>{renderContent()}</div>
       </animated.div>
-      <animated.div className={styles.background}>
-        {/* <Background /> */}
-        <RagDoll />
+      <animated.div
+        className={styles.background}
+        // style={{ zIndex: curPage === "index" ? 1 : -1 }}
+      >
+        <Background />
       </animated.div>
     </div>
   );
