@@ -1,5 +1,7 @@
+import styles from "./index.module.less";
+
 const DocsPage = () => {
-  return <div>DocsPage </div>;
+  return <div className={styles.container}></div>;
 };
 
 export default DocsPage;
