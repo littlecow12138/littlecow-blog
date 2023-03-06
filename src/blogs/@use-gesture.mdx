@@ -1,0 +1,51 @@
+# 开始使用
+
+👍🏻`@use-gesture`是一组手势，使得你可以把鼠标和触摸事件绑定到任意节点上
+
+> 通过获取的 data，用几行代码设置复杂手势，例如拖拽和捏，将会变得非常简单
+
+---
+
+## React
+
+在 React 中，已经包含了许多你可以添加到组件中的钩子。你可以单独使用这个库，但是更建议结合`react-spring`使用来发挥他的最大作用
+
+### 安装
+
+```shell
+yarn add @use-gesture/react
+npm install @use-gesture/react
+```
+
+### 简单的 react 的例子
+
+> reference
+
+```tsx
+import { MDXProvider } from "@mdx-js/react";
+import Post from "../../../../blogs/@use-gesture.mdx";
+import SyntaxHighlighter from "react-syntax-highlighter";
+
+const MDXPlayground = () => {
+  function code({ className, ...props }: any) {
+    const match = /language-(\w+)/.exec(className || "");
+    return match ? (
+      <SyntaxHighlighter
+        language={match[1]}
+        PreTag="div"
+        {...props}
+        style={"prism"}
+      />
+    ) : (
+      <code className={className} {...props} />
+    );
+  }
+  return (
+    <MDXProvider>
+      <Post components={{ code }} />
+    </MDXProvider>
+  );
+};
+
+export default MDXPlayground;
+```

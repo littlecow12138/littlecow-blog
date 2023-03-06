@@ -25,6 +25,8 @@ const ForkTsCheckerWebpackPlugin =
     ? require("react-dev-utils/ForkTsCheckerWarningWebpackPlugin")
     : require("react-dev-utils/ForkTsCheckerWebpackPlugin");
 const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
+const remarkGfm = import("remark-gfm");
+const rehypeHighlight = import("rehype-highlight");
 
 const createEnvironmentHash = require("./webpack/persistentCache/createEnvironmentHash");
 
@@ -570,6 +572,19 @@ module.exports = function (webpackEnv) {
                 },
                 "less-loader"
               ),
+            },
+            {
+              test: /\.mdx?$/,
+              use: [
+                {
+                  loader: "@mdx-js/loader",
+                  /** @type {import('@mdx-js/loader').Options} */
+                  options: {
+                    remarkPlugins: [remarkGfm],
+                    rehypePlugins: [rehypeHighlight],
+                  },
+                },
+              ],
             },
             // "file" loader makes sure those assets get served by WebpackDevServer.
             // When you `import` an asset, you get its (virtual) filename.

@@ -8,6 +8,7 @@
 /// <reference types="@react-spring/postprocessing" />
 /// <reference types="react-router-dom" />
 /// <reference types="three/examples/jsm/loaders/GLTFLoader" />
+/// <reference types="@mdx-js/react" />
 
 // declare module "three/examples/jsm/loaders/GLTFLoader";
 

@@ -1,5 +1,5 @@
 .container {
-  pointer-events: none;
+  z-index: 99;
   overflow: hidden;
   position: relative;
   width: 100%;
@@ -61,7 +61,10 @@
     background-color: #fff;
     padding: 4.5rem 0 0 0;
     .content {
+      overflow: auto;
       padding: 0 1.25rem;
+      width: calc(1005 - 2.5rem);
+      height: 100%;
     }
   }
 }
