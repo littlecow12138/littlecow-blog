@@ -9,6 +9,7 @@
 /// <reference types="react-router-dom" />
 /// <reference types="three/examples/jsm/loaders/GLTFLoader" />
 /// <reference types="@mdx-js/react" />
+/// <reference types="react-use-gesture" />
 
 // declare module "three/examples/jsm/loaders/GLTFLoader";
 
