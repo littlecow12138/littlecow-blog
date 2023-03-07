@@ -42,7 +42,9 @@ const IndexPage = () => {
           <span>Sun</span>
         </span>
         {!active ? (
-          <span>臣妾要告发熹贵妃私通，秽乱后宫，罪不容诛!</span>
+          <span>
+            If you survive there, you have to be as crazy as a hatter！
+          </span>
         ) : (
           <></>
         )}
@@ -57,9 +59,9 @@ const IndexPage = () => {
             }}
             style={{ background: curPage === "docs" ? "#d8bfc9" : "none" }}
           >
-            Docs
+            文档
           </div>
-          <div
+          {/* <div
             className={styles.menuItem}
             onClick={() => {
               setActive(true);
@@ -68,7 +70,7 @@ const IndexPage = () => {
             style={{ background: curPage === "examples" ? "#d8bfc9" : "none" }}
           >
             Examples
-          </div>
+          </div> */}
         </div>
       </div>
       <animated.div className={styles.contentWrapper} style={contentStyles}>

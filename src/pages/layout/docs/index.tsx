@@ -8,12 +8,18 @@ import styles from "./index.module.less";
  */
 const DocsPage = () => {
   const [collapse, setCollapse] = useState<boolean>(false);
+  const [blogKey, setBlogKey] = useState<number>(-1);
 
   return (
     <div className={styles.container}>
+      双击卡片进入
       <div className={styles.docList}></div>
       <div className={styles.content}>
-        <Deck />
+        {blogKey < 0 ? (
+          <Deck setBlogKey={setBlogKey} />
+        ) : (
+          <MDXPlayground blogKey={blogKey} />
+        )}
       </div>
     </div>
   );

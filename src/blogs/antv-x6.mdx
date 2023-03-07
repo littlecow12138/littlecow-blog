@@ -1,0 +1,791 @@
+# 背景
+在需要开发关系图相关的内容时，自己去开发关系图的相关功能和交互操作，成本过大，因此选用antv-x6来辅助实现接线图的开发设计
+# 官网
+[https://x6.antv.antgroup.com/](https://x6.antv.antgroup.com/)
+# 快速上手
+## 安装
+```shell
+# npm
+$ npm install @antv/x6 --save
+
+# yarn
+$ yarn add @antv/x6
+```
+## hello-world
+
+1. 初始化画布
+```jsx
+import { Graph } from "@antv/x6";
+
+const graph = new Graph({
+  container: document.getElementById("container"),
+  width: 800,
+  height: 600,
+  background: {
+    color: "#F2F7FA",
+  },
+});
+```
+
+2. 渲染节点和边
+```jsx
+const data = {
+  nodes: [
+    {
+      id: 'node1',
+      shape: 'rect',
+      x: 40,
+      y: 40,
+      width: 100,
+      height: 40,
+      label: 'hello',
+      attrs: {
+        // body 是选择器名称，选中的是 rect 元素
+        body: {
+          stroke: '#8f8f8f',
+          strokeWidth: 1,
+          fill: '#fff',
+          rx: 6,
+          ry: 6,
+        },
+      },
+    },
+    {
+      id: 'node2',
+      shape: 'rect',
+      x: 160,
+      y: 180,
+      width: 100,
+      height: 40,
+      label: 'world',
+      attrs: {
+        body: {
+          stroke: '#8f8f8f',
+          strokeWidth: 1,
+          fill: '#fff',
+          rx: 6,
+          ry: 6,
+        },
+      },
+    },
+  ],
+  edges: [
+    {
+      shape: 'edge',
+      source: 'node1',
+      target: 'node2',
+      label: 'x6',
+      attrs: {
+        // line 是选择器名称，选中的边的 path 元素
+        line: {
+          stroke: '#8f8f8f',
+          strokeWidth: 1,
+        },
+      },
+    },
+  ],
+}
+```
+
+3. 使用插件
+```jsx
+import { Snapline } from "@antv/x6-plugin-snapline";
+
+graph.use(
+  new Snapline({
+    enabled: true,
+  })
+);
+```
+![image.png](https://cdn.nlark.com/yuque/0/2023/png/25548832/1677482301928-1b47f725-c2d2-4a1a-ab68-d6887319a5d1.png#averageHue=%23f6f9fb&clientId=u06bfea27-d438-4&from=paste&height=385&id=u4dad5ac0&name=image.png&originHeight=770&originWidth=1762&originalType=binary&ratio=2&rotation=0&showTitle=false&size=43104&status=done&style=none&taskId=u07be16b8-1716-4679-b6e7-546f6b8475b&title=&width=881)
+# 基础
+## 画布
+
+- `container` 存放画布的div容器
+- `autoResize` 让画布自适应父组件宽高
+- `background` 画布背景色
+- `grid` 画布的背景网格，可以通过visible属性控制是否显示
+- `panning` 画布是否可以拖拽平移，默认禁用。
+> 可以通过 `graph.enablePanning();``graph.disablePanning();`来启用和禁用
+
+- `mousewheel` 鼠标滚轮缩放，默认禁用
+- `connecting` 连线选项
+- `interacting` 定制节点和边的交互行为
+```tsx
+graph = new Graph({
+  container: document.getElementById("graph-canvas"),
+  autoResize: true,
+  background: { color: "rgba(239, 244, 251, 0.60)" },
+  interacting: () => {
+    return nodeMoveable;
+  },
+  grid: {
+    visible: true,
+    type: "doubleMesh",
+    args: [
+      {
+        color: "#eee", // 主网格线颜色
+        thickness: 1, // 主网格线宽度
+      },
+      {
+        color: "#ddd", // 次网格线颜色
+        thickness: 1, // 次网格线宽度
+        factor: 4, // 主次网格线间隔
+      },
+    ],
+  },
+  panning: false,
+  mousewheel: {
+    enabled: false,
+    modifiers: ["ctrl", "meta"],
+  },
+  connecting: {
+    allowBlank: true,
+  },
+});
+```
+## 节点
+### 如何定制一个react节点？
+```tsx
+// 自定义节点 - 左侧为图片 右侧为数据展示
+const gridItemNodeComp = ({ node }: { node: Node }) => {
+  const nodeData = node.getData();
+  const detailList = React.useContext(ProgressContext);
+
+  const itemNodeRef = useRef();
+
+  const [detailInfos, setDetailInfos] = useState<IDetailsInfo[]>([]);
+
+  const resizeComp = () => {
+    if (itemNodeRef) {
+      // 定制组件自适应宽高
+      // node.resize(
+      //   (itemNodeRef.current as HTMLDivElement).offsetWidth,
+      //   (itemNodeRef.current as HTMLDivElement).offsetHeight
+      // );
+      node.setSize({
+        width: (itemNodeRef.current as HTMLDivElement).offsetWidth,
+        height: (itemNodeRef.current as HTMLDivElement).offsetHeight,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (detailList) {
+      detailList.map((item) => {
+        if (item.nodeId === node.id) {
+          resizeComp();
+          setDetailInfos(item.extData.details);
+        }
+      });
+    }
+  }, [detailList]);
+
+  useEffect(() => {
+    resizeComp();
+  }, [detailInfos]);
+
+  useEffect(() => {
+    window.onresize = () => resizeComp();
+  }, []);
+
+  return (
+    <div ref={itemNodeRef} className={styles.itemContainer} id={node.id}>
+      <div className={styles.icon}>
+        <img src={getIconByKey(nodeData?.key)} />
+        <span>{getNameByKey(nodeData?.key)}</span>
+      </div>
+      <div
+        className={styles.splitLine}
+        style={{ display: detailInfos?.length ? "inline-flex" : "none" }}
+      >
+        <div />
+      </div>
+      <div className={styles.details}>
+        {detailInfos &&
+          detailInfos.map((detail, index) => {
+            return (
+              <div className={styles.detailItem} key={index}>
+                <div className={styles.label}>{detail?.displayName}</div>
+                <div className={styles.value}>{detail.value || "--"}</div>
+                <div className={styles.unit}>{detail?.unitCode}</div>
+              </div>
+            );
+          })}
+      </div>
+    </div>
+  );
+};
+
+const gridItemNodeDragComp = ({ node }: { node: Node }) => {
+  const { key } = node.getData();
+  return (
+    <div>
+      <img src={getIconByKey(key)} style={{ width: "100%", height: "100%" }} />
+    </div>
+  );
+};
+
+export const registerNodes = () => {
+  // 注册在图表展示的节点
+  register({
+    shape: "custom-react-node",
+    component: gridItemNodeComp,
+    effect: ["data"],
+    ports: {
+      groups: {
+        top: {
+          position: "top",
+          attrs: {
+            circle: {
+              magnet: true,
+              stroke: "#8f8f8f",
+              r: 5,
+            },
+          },
+          label: {
+            position: "top",
+          },
+        },
+        bottom: {
+          position: "bottom",
+          attrs: {
+            circle: {
+              magnet: true,
+              stroke: "#8f8f8f",
+              r: 5,
+            },
+          },
+          label: {
+            position: "top",
+          },
+        },
+        left: {
+          position: "left",
+          attrs: {
+            circle: {
+              magnet: true,
+              stroke: "#8f8f8f",
+              r: 5,
+            },
+          },
+          label: {
+            position: "left",
+          },
+        },
+        right: {
+          position: "right",
+          attrs: {
+            circle: {
+              magnet: true,
+              stroke: "#8f8f8f",
+              r: 5,
+            },
+          },
+          label: {
+            position: "right",
+          },
+        },
+      },
+    },
+  });
+  // 注册拖拽显示的节点
+  register({
+    shape: "custom-react-node-drag",
+    component: gridItemNodeDragComp,
+    effect: ["data"],
+  });
+};
+```
+### 定制react节点的自适应
+> 由于接线图项目中，右侧的展示数据长度会随着文本和数值撑开父组件的宽高，但是antv的节点宽高不会根据react节点自适应大小
+
+使用Node类中的`resize(width, height)`或者`setSize(width, height)`方法。在节点数据变更时，调用该方法，先获取react组件的宽高再使用该宽高来改变节点大小
+### 定制react节点的数据更新
+> 由于接线图项目中，右侧的数据需要通过mqtt获取并实时更新展示，因此需要react节点中的值能够实时进行更新
+
+antv官方给出了两个更新react节点数据的方式。
+#### Effect方式
+与`HTML`一样，在注册节点的时候，提供一个`effect`字段，是当前节点的`prop`数组，当`effect`包含的`prop`有变动时，会重新渲染当前的`React`组件
+```tsx
+register({
+  shape: "custom-react-node",
+  width: 100,
+  height: 100,
+  effect: ["data"],
+  component: NodeComponent,
+});
+
+const node = graph.addNode({
+  shape: "custom-react-node",
+  x: 60,
+  y: 100,
+  data: {
+    progress: 30,
+  },
+});
+
+setInterval(() => {
+  const { progress } = node.getData<{ progress: number }>();
+  node.setData({
+    progress: (progress + 10) % 100,
+  });
+}, 1000);
+```
+#### Portal方式
+上面的React组件渲染方式有一个缺点，因为内部是通过以下方式将组件渲染到节点的DOM中。
+```tsx
+import { createRoot, Root } from "react-dom/client";
+
+const root = createRoot(container); // container 为节点容器
+root.render(component);
+```
+可以看出，react组件已经不处于正常的渲染文档树中。所以它内部无法获取外部`Context`内容。如果有这种应用场景，可以使用`Portal`模式来渲染`React`组件
+```tsx
+import React from 'react'
+import { Graph } from '@antv/x6'
+import { register, Portal } from '@antv/x6-react-shape'
+import { Progress, Button } from 'antd'
+import styles from './index.less'
+
+const X6ReactPortalProvider = Portal.getProvider() // 注意，一个 graph 只能申明一个 portal provider
+const ProgressContext = React.createContext(30)
+
+const NodeComponent = () => {
+  const progress = React.useContext(ProgressContext)
+  return (
+    <div className={styles['react-node']}>
+      <Progress type="circle" percent={progress} width={80} />
+    </div>
+  )
+}
+
+register({
+  shape: 'custom-portal-react-node',
+  width: 100,
+  height: 100,
+  component: NodeComponent,
+})
+
+export default class Example extends React.Component {
+  private container: HTMLDivElement
+
+  state = {
+    progress: 30,
+  }
+
+  componentDidMount() {
+    const graph = new Graph({
+      container: this.container,
+      background: {
+        color: '#F2F7FA',
+      },
+    })
+
+    graph.addNode({
+      shape: 'custom-portal-react-node',
+      x: 60,
+      y: 100,
+    })
+
+    graph.centerContent()
+  }
+
+  changeProgress = () => {
+    this.setState({
+      progress: (this.state.progress + 10) % 100,
+    })
+  }
+
+  refContainer = (container: HTMLDivElement) => {
+    this.container = container
+  }
+
+  render() {
+    return (
+      <div className={styles.app}>
+        <ProgressContext.Provider value={this.state.progress}>
+          <X6ReactPortalProvider />
+        </ProgressContext.Provider>
+        <div className={styles['app-btns']}>
+          <Button onClick={this.changeProgress}>Add</Button>
+        </div>
+        <div className={styles['app-content']} ref={this.refContainer} />
+      </div>
+    )
+  }
+}
+```
+> 由于effect方式只能更新变量，传入数组和对象都无法触发视图的更新，因此选用Portal方式去更新节点中的数据
+
+## 边和链接桩
+> 在接线图项目中需要将原件通过连线的方式表示其中的关系，因此，可以通过给节点添加链接桩，然后允许链接桩连线到空白处，满足业务需求
+
+### 链接桩的添加和样式设置
+
+1. 注册节点时配置链接桩的群组和样式
+```tsx
+register({
+  shape: "custom-react-node",
+  component: gridItemNodeComp,
+  effect: ["data"],
+  ports: {
+    groups: {
+      top: {
+        position: "top",
+        attrs: {
+          circle: {
+            magnet: true,
+            stroke: "#8f8f8f",
+            r: 5,
+          },
+        },
+        label: {
+          position: "top",
+        },
+      },
+      bottom: {
+        position: "bottom",
+        attrs: {
+          circle: {
+            magnet: true,
+            stroke: "#8f8f8f",
+            r: 5,
+          },
+        },
+        label: {
+          position: "top",
+        },
+      },
+      left: {
+        position: "left",
+        attrs: {
+          circle: {
+            magnet: true,
+            stroke: "#8f8f8f",
+            r: 5,
+          },
+        },
+        label: {
+          position: "left",
+        },
+      },
+      right: {
+        position: "right",
+        attrs: {
+          circle: {
+            magnet: true,
+            stroke: "#8f8f8f",
+            r: 5,
+          },
+        },
+        label: {
+          position: "right",
+        },
+      },
+    },
+  },
+});
+```
+
+2. 添加节点时，添加上配置的链接桩
+```tsx
+const createCustomTpgNode = (graph: Graph, draggingNode: Cell) => {
+  return graph.createNode({
+    shape: "custom-react-node",
+    data: {
+      key: draggingNode?.data?.key,
+    },
+    ports: {
+      items: [
+        {
+          group: "top",
+        },
+        {
+          group: "bottom",
+        },
+        {
+          group: "left",
+        },
+        {
+          group: "right",
+        },
+      ],
+    },
+  });
+};
+```
+### 链接桩连线箭头的去除
+由于链接桩连线出来默认会在终点有一个箭头样式，因此如果需要去除这个样式需要另外进行设置
+![image.png](https://cdn.nlark.com/yuque/0/2023/png/25548832/1677561937069-61b4448d-c163-4c70-9777-8019785ea3e3.png#averageHue=%23f0f3f7&clientId=u5cbeb1fc-7458-4&from=paste&height=380&id=u8fe1828c&name=image.png&originHeight=380&originWidth=286&originalType=binary&ratio=2&rotation=0&showTitle=false&size=72333&status=done&style=none&taskId=u92442713-c40a-45a6-a10d-16513f5fbc8&title=&width=286)
+
+1. 监听线段添加事件
+2. 每次添加新的线段，设置起点和终点的标记的样式为null
+```tsx
+graph.on("edge:added", ({ edge }) => {
+  edge.attr({
+    line: {
+      sourceMarker: null,
+      targetMarker: null,
+    },
+  });
+});
+```
+![image.png](https://cdn.nlark.com/yuque/0/2023/png/25548832/1677561960093-e34abe5f-549b-4242-8190-3a2cf6a2bac6.png#averageHue=%23f1f3f8&clientId=u5cbeb1fc-7458-4&from=paste&height=132&id=uad499da0&name=image.png&originHeight=132&originWidth=157&originalType=binary&ratio=2&rotation=0&showTitle=false&size=16805&status=done&style=none&taskId=u78de724e-c5d0-476a-82ee-eb29cdd9fa9&title=&width=157)
+## 数据的导出和导入
+> 当绘制完成关系图后，需要对绘制的数据通过json格式进行保存，并通过后端接口进行存储和获取
+
+`graph.toJson()`会自动将编辑的图标数据转化成json数据
+`graph.fromJson()`会自动将之前编辑的图表数据再进行展示
+## 事件系统
+常用的事件有
+```tsx
+graph.on("cell:click", ({ e, x, y, cell, view }) => {});
+graph.on("node:click", ({ e, x, y, node, view }) => {});
+graph.on("edge:click", ({ e, x, y, edge, view }) => {});
+graph.on("blank:click", ({ e, x, y }) => {});
+
+graph.on("cell:mouseenter", ({ e, cell, view }) => {});
+graph.on("node:mouseenter", ({ e, node, view }) => {});
+graph.on("edge:mouseenter", ({ e, edge, view }) => {});
+graph.on("graph:mouseenter", ({ e }) => {});
+```
+# 进阶
+## 工具
+节点和边都可以添加和去除工具。
+例如，点击节点，给节点添加一个包围矩形的工具
+```tsx
+const addBoundaryTool = (cell: Cell) => {
+  cell.addTools([
+    {
+      name: "boundary",
+      args: {
+        attrs: {
+          fill: "#BBD5FD",
+          stroke: "#0066FF",
+          "stroke-width": 1,
+          "fill-opacity": 0.2,
+        },
+      },
+    },
+  ]);
+};
+```
+![image.png](https://cdn.nlark.com/yuque/0/2023/png/25548832/1677739336084-fd751440-4a0c-42be-a6ea-28ef26351750.png#averageHue=%23edf1f9&clientId=u5cbeb1fc-7458-4&from=paste&height=170&id=uae4d25f7&name=image.png&originHeight=170&originWidth=254&originalType=binary&ratio=2&rotation=0&showTitle=false&size=9194&status=done&style=none&taskId=ua8cd80bb-d4bf-4338-9f97-ee4a749e9ff&title=&width=254)
+## 插件
+### 框选
+#### 安装插件
+```shell
+# npm
+$ npm install @antv/x6-plugin-selection --save
+
+# yarn
+$ yarn add @antv/x6-plugin-selection
+```
+#### 使用
+
+1. 添加框选工具到图表中
+```tsx
+graph.use(
+  new Selection({
+    enabled: true,
+  })
+);
+```
+
+2. 通过`graph.disableSelection()` `graph.enableSelection()`来实现框选插件是否激活
+3. 通过`graph.getSelectedCells()` 获取选择的节点
+> PS：框选的话是不能选择到边只能选择到节点对象
+
+### 复制粘贴
+#### 安装插件
+```shell
+# npm
+$ npm install @antv/x6-plugin-clipboard --save
+
+# yarn
+$ yarn add @antv/x6-plugin-clipboard
+```
+#### 使用
+
+1. 导入插件
+```tsx
+graph.use(
+  new Clipboard({
+    enabled: true,
+  })
+);
+```
+
+2. 复制选择的节点
+```tsx
+ graph.copy(graph.getSelectedCells());
+```
+
+3. 粘贴选择的节点
+```tsx
+graph.paste({ offset: { dx: 100, dy: 100 } })
+```
+### 快捷键
+#### 安装
+```shell
+# npm
+$ npm install @antv/x6-plugin-keyboard --save
+
+# yarn
+$ yarn add @antv/x6-plugin-keyboard
+```
+#### 使用
+
+1. 引用插件
+```tsx
+graph.use(
+  new Keyboard({
+    enabled: true,
+    global: false,
+  })
+);
+```
+
+2. 绑定操作到快捷键上
+```tsx
+graph.bindKey(["command+c", "ctrl+c"], () => {
+  console.log("点击ctrl-c");
+  handleCopy();
+});
+graph.bindKey(["command+v", "ctrl+v"], () => {
+  console.log("点击ctrl-v");
+  handlePaste();
+});
+```
+> PS：Windows的快捷键和Mac的不相同，都需要进行绑定
+
+### 撤销重做
+#### 安装插件
+```shell
+# npm
+$ npm install @antv/x6-plugin-history --save
+
+# yarn
+$ yarn add @antv/x6-plugin-history
+```
+#### 使用
+
+1. 添加撤销重做插件到图表对象
+```tsx
+graph.use(
+  new History({
+    enabled: true,
+    stackSize: 30,
+  })
+);
+```
+
+2. 监听通过`history:changed`事件判断当前是否可撤销或重做
+```tsx
+graph.on("history:change", () => {
+  console.log("changed", graph.canRedo(), graph.canUndo());
+});
+```
+
+3. 点击撤销或者重做调用事件
+```tsx
+graph.undo();
+graph.redo();
+```
+> 需要注意的是：如果使用了添加链接桩，工具等操作时，也会将其中的操作进行记录，但是不想要撤销，那就要用到
+> `beforeAddCommand`将这些类型在记录之前进行忽略
+
+![image.png](https://cdn.nlark.com/yuque/0/2023/png/25548832/1677742907326-952fb85b-671d-41a9-ba43-1026e7f05a32.png#averageHue=%23fdfcfc&clientId=u5cbeb1fc-7458-4&from=paste&height=418&id=u655bfd48&name=image.png&originHeight=418&originWidth=304&originalType=binary&ratio=2&rotation=0&showTitle=false&size=70851&status=done&style=none&taskId=u3b3aa9d4-55fd-4cfc-9302-6c4fa9cbc93&title=&width=304)
+```typescript
+graph.use(
+  new History({
+    enabled: false,
+    stackSize: 30,
+    beforeAddCommand(event, args: any) {
+      console.log(event, args);
+      if (
+        args.key === "ports" ||
+        args.key === "tools" ||
+        args.key === "size"
+      ) {
+        return false;
+      }
+    },
+  })
+);
+```
+### Dnd（拖拽元件工具）
+> 由于接线图项目中拖拽库的样式需要自定义，所以选择dnd插件，如果对样式没有要求可以用官方提供的[stencil插件](https://x6.antv.antgroup.com/tutorial/plugins/stencil)，可以更加简便的创建拖拽元件库，该插件是基于dnd的基础上进一层封装
+
+#### 安装
+```shell
+# npm
+$ npm install @antv/x6-plugin-dnd --save
+
+# yarn
+$ yarn add @antv/x6-plugin-dnd
+```
+#### 使用
+
+1. 添加dnd插件到graph对象中
+```tsx
+const dnd = new Dnd({
+  target: graph,
+});
+```
+
+2. 编写拖拽方法，即拖拽节点的添加
+```tsx
+// 拖拽添加元件
+const startDrag = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+  const target = e.currentTarget;
+  const type = target.getAttribute("data-type");
+  tempNodeKey = type;
+  const node = graph.createNode({
+    shape: "custom-react-node-drag",
+    width: 80,
+    height: 80,
+    data: {
+      // 告诉组件该节点展示哪个元件
+      key: type,
+    },
+  });
+  dnd.start(node, e.nativeEvent as any);
+};
+```
+
+3. 由于接线图项目拖拽节点和最终放置的节点并不相同，因此需要自定义拖拽节点
+```tsx
+const createCustomTpgNode = (graph: Graph, draggingNode: Cell) => {
+  return graph.createNode({
+    shape: "custom-react-node",
+    data: {
+      key: draggingNode?.data?.key,
+    },
+    ports: {
+      items: [
+        {
+          group: "top",
+        },
+        {
+          group: "bottom",
+        },
+        {
+          group: "left",
+        },
+        {
+          group: "right",
+        },
+      ],
+    },
+  });
+};
+
+const dnd = new Dnd({
+  target: graph,
+  getDragNode: (draggingNode) => {
+    return createCustomTpgNode(graph, draggingNode);
+  },
+});
+```

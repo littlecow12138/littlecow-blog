@@ -1,0 +1,559 @@
+# 构建主应用基座
+将普通项目改造成`qiankun`主应用基座，需要进行三步操作：
+
+1. 创建微应用容器-用于承载微应用，渲染显示微应用
+2. 注册微应用-设置微应用激活条件，微应用地址等等
+3. 启动`qiankun`
+## 创建微应用容器
+我们先在主应用中创建微应用的承载容器，这个容器规定了微应用的显示区域，微应用将在该容器内渲染并显示。
+
+我们先设置路由，路由文件规定了主应用自身的路由匹配规则，代码实现如下：
+```typescript
+// src/routes/index.ts
+import Home from "@/pages/home/index.vue";
+
+const routes = [
+  {
+    /**
+     * path: 路径为 / 时触发该路由规则
+     * name: 路由的 name 为 Home
+     * component: 触发路由时加载 `Home` 组件
+     */
+    path: "/",
+    name: "Home",
+    component: Home,
+  }
+];
+
+export default routes;
+```
+```typescript
+// src/main.ts
+import Vue from "vue";
+import VueRouter from "vue-router";
+
+import routes from "./routes";
+
+/**
+ * 注册路由实例
+ * 即将开始监听 location 变化，触发路由规则
+ */
+const router = new VueRouter({
+  mode: "history",
+  routes,
+});
+
+// 创建vue实例
+// 将该实例挂载在id微main-app的节点上
+new Vue({
+  router,
+  render: (h) => h(App),
+}).$mount("#main-app");
+```
+从上面的代码可以看出，主应用设置了路由规则，设置了`Home`主页的路由匹配规则。
+现在来设置主应用的布局，会有一个菜单和显示区域，代码实现如下：
+```javascript
+// /src/App.vue
+export default class App extends Vue {
+  /**
+   * 菜单列表
+   * key: 唯一 Key 值
+   * title: 菜单标题
+   * path: 菜单对应的路径
+   */
+  menus = [
+    {
+      key: "Home",
+      title: "主页",
+      path: "/"
+    },
+  ];
+}
+```
+以上是对菜单配置的实现，我们还需要实现基座和微应用的显示区域
+```vue
+<template>
+  <a-config-provider prefixCls="cns">
+    <section id="cns-main-app">
+      <section class="cns-menu-wrapper">
+        <main-menu :menus="menus" />
+      </section>
+      <section class="cns-frame-wrapper">
+        <!-- 主应用渲染区，用于挂载主应用路由触发的组件 -->
+        <router-view v-show="$route.name" />
+
+        <!-- 子应用渲染区，用于挂载子应用节点 -->
+        <section v-show="!$route.name" id="frame"></section>
+      </section>
+    </section>
+  </a-config-provider>
+</template>
+```
+分析以上代码：
+
+- **第5行：**主应用菜单，用来渲染菜单
+- **第9行：**主应用渲染区。在触发路由规则时（由路由配置表的`$route.name`判断），将渲染主应用组件
+- **第10行：**微应用渲染区。在未触发主应用路由规则时（由路由配置表的`$route.name`判断），将渲染微应用节点
+## 注册微应用
+在构建好了主框架后，我们需要使用`qiankun`的`registerMicroApps`方法注册微应用，代码实现如下：
+```typescript
+// micro-app-main/src/micro/apps.ts
+// 此时我们还没有微应用，所以 apps 为空
+const apps = [];
+
+export default apps;
+
+// micro-app-main/src/micro/index.ts
+// 一个进度条插件
+import NProgress from "nprogress";
+import "nprogress/nprogress.css";
+import { message } from "ant-design-vue";
+import {
+  registerMicroApps,
+  addGlobalUncaughtErrorHandler,
+  start,
+} from "qiankun";
+
+// 微应用注册信息
+import apps from "./apps";
+
+/**
+ * 注册微应用
+ * 第一个参数 - 微应用的注册信息
+ * 第二个参数 - 全局生命周期钩子
+ */
+registerMicroApps(apps, {
+  // qiankun 生命周期钩子 - 微应用加载前
+  beforeLoad: (app: any) => {
+    // 加载微应用前，加载进度条
+    NProgress.start();
+    console.log("before load", app.name);
+    return Promise.resolve();
+  },
+  // qiankun 生命周期钩子 - 微应用挂载后
+  afterMount: (app: any) => {
+    // 加载微应用前，进度条加载完成
+    NProgress.done();
+    console.log("after mount", app.name);
+    return Promise.resolve();
+  },
+});
+
+/**
+ * 添加全局的未捕获异常处理器
+ */
+addGlobalUncaughtErrorHandler((event: Event | string) => {
+  console.error(event);
+  const { message: msg } = event as any;
+  // 加载失败时提示
+  if (msg && msg.includes("died in status LOADING_SOURCE_CODE")) {
+    message.error("微应用加载失败，请检查应用是否可运行");
+  }
+});
+
+// 导出 qiankun 的启动函数
+export default start;
+```
+微应用的注册信息在`apps`数组中（目前为空，在后面会接入微应用的注册信息），然后用`qiankun`的`registerMicroApps`方法注册微应用，最后导出了`start`函数，注册微应用的工作就完成了
+## 启动主应用
+在注册好了微应用，导出`start`函数后，我们需要在合适的地方调用`start`启动主应用
+我们一般在入口文件启动`qiankun`应用
+```typescript
+// micro-app-main/src/main.ts
+//...
+import startQiankun from "./micro";
+
+startQiankun();
+```
+到这一步，主应用基座就创建好了
+# 接入微应用
+现在的主应用基座只有一个主页，现在需要接入微应用
+`qiankun`内部通过`import-entry-html`加载微应用，要求微应用需要导出生命周期钩子函数
+
+
+从上图可以看出，`qiankun`内部会校验微应用的生命周期钩子函数，如果微应用没有导出这三个生命周期钩子函数，则微应用会加载失败。
+
+如果我们使用了脚手架搭建微应用的话，我们可以通过`webpack`配置在入口文件处导出这三个生命周期钩子函数。如果没有脚手架的话，也可以直接在微应用的`Window`上挂载这三个生命周期钩子函数。
+# 接入Vue微应用
+我们在`micro-app-main`同级目录，创建一个vue项目，配置相关路由和设计对应页面
+## 注册微应用
+在创建好`Vue`微应用后。首先，我们需要在主应用中注册该微应用的信息，
+```typescript
+// micro-app-main/src/micro/apps.ts
+const apps = [
+  /**
+   * name: 微应用名称 - 具有唯一性
+   * entry: 微应用入口 - 通过该地址加载微应用
+   * container: 微应用挂载节点 - 微应用加载完成后将挂载在该节点上
+   * activeRule: 微应用触发的路由规则 - 触发路由规则后将加载该微应用
+   */
+  {
+    name: "VueMicroApp",
+    entry: "//localhost:10200",
+    container: "#frame",
+    activeRule: "/vue",
+  },
+];
+
+export default apps;
+
+```
+通过以上代码，在主应用中就注册了我们的`Vue`微应用，进入`/vue`路由时将加载我们的`Vue`微应用
+
+在菜单配置处，也加上`Vue`微应用的快捷入口，代码实现如下：
+```typescript
+// micro-app-main/src/App.vue
+//...
+export default class App extends Vue {
+  /**
+   * 菜单列表
+   * key: 唯一 Key 值
+   * title: 菜单标题
+   * path: 菜单对应的路径
+   */
+  menus = [
+    {
+      key: "Home",
+      title: "主页",
+      path: "/",
+    },
+    {
+      key: "VueMicroApp",
+      title: "Vue 主页",
+      path: "/vue",
+    },
+    {
+      key: "VueMicroAppList",
+      title: "Vue 列表页",
+      path: "/vue/list",
+    },
+  ];
+}
+
+```
+在菜单配置完成后，主应用基座菜单会多出两个菜单
+## 菜单微应用
+在主应用注册好了微应用，我们还需要对微应用进行一系列的配置。首先，我们在`Vue`的入口文件`main.js`中，导出`qiankun`主应用所需要的三个生命周期钩子函数，
+```typescript
+import Vue from "vue";
+import VueRouter from "vue-router";
+import Antd from "ant-design-vue";
+import "ant-design-vue/dist/antd.css";
+
+import "./public-path";
+import App from "./App.vue";
+import routes from "./routes";
+
+Vue.use(VueRouter);
+Vue.use(Antd);
+Vue.config.productionTip = false;
+
+let instance = null;
+let router = null;
+
+/**
+ * 渲染函数
+ * 两种情况：主应用生命周期钩子中运行 / 微应用单独启动时运行
+ */
+function render() {
+  // 在 render 中创建 VueRouter，可以保证在卸载微应用时，移除 location 事件监听，防止事件污染
+  router = new VueRouter({
+    // 运行在主应用中时，添加路由命名空间 /vue
+    base: window.__POWERED_BY_QIANKUN__ ? "/vue" : "/",
+    mode: "history",
+    routes,
+  });
+
+  // 挂载应用
+  instance = new Vue({
+    router,
+    render: (h) => h(App),
+  }).$mount("#app");
+}
+
+// 独立运行时，直接挂载应用
+if (!window.__POWERED_BY_QIANKUN__) {
+  render()
+}
+
+/**
+ * bootstrap 只会在微应用初始化的时候调用一次，下次微应用重新进入时会直接调用 mount 钩子，不会再重复触发 bootstrap。
+ * 通常我们可以在这里做一些全局变量的初始化，比如不会在 unmount 阶段被销毁的应用级别的缓存等。
+ */
+export async function bootstrap() {
+  console.log("VueMicroApp bootstraped");
+}
+
+/**
+ * 应用每次进入都会调用 mount 方法，通常我们在这里触发应用的渲染方法
+ */
+export async function mount(props) {
+  console.log("VueMicroApp mount", props);
+  render(props);
+}
+
+/**
+ * 应用每次 切出/卸载 会调用的方法，通常在这里我们会卸载微应用的应用实例
+ */
+export async function unmount() {
+  console.log("VueMicroApp unmount");
+  instance.$destroy();
+  instance = null;
+  router = null;
+}
+
+```
+
+- **第6行 :**`webpack`默认的`publicPath`为`""`空字符串，会基于当前路径来加载资源。我们在主应用中加载微应用时需要重新设置`publicPath`，这样才能正确加载微应用的相关资源（public-path.js的具体实现在后面）
+- **第21行 :** 微应用挂载函数，在主应用中运行时将在`mount`生命周期钩子函数中调用，可以保证在沙箱内运行
+- **第38行 :** 微应用独立运行时，直接执行`render`函数挂载微应用
+- **第46行 :** 微应用导出的生命周期钩子函数 - `bootstrap`
+- **第54行 :** 微应用导出的生命周期钩子函数 - `mount`
+- **第61行 :** 微应用导出的生命周期钩子函数 - `unmounted`
+
+在配置好了入口文件`main.js`后，我们还需要配置`webpack`，使`main.js`导出的生命周期钩子函数可以被`qiankun`识别获取
+
+我们直接配置`vue.config.js`即可，代码实现如下
+```javascript
+const path = require('path');
+
+module.exports = {
+  devServer: {
+    // 监听端口
+    port: 10200,
+    // 关闭主机检查，使微应用可以被 fetch
+    disableHostCheck: true,
+    // 配置跨域请求头，解决开发环境的跨域问题
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+    },
+  },
+  configureWebpack: {
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, 'src'),
+      }
+    },
+    output: {
+      // 微应用的包名，这里与主应用中注册的微应用名称一致
+      library: "VueMicroApp",
+      // 将你的 library 暴露为所有的模块定义下都可运行的方式
+      libraryTarget: 'umd',
+      // 按需加载相关，设置为 webpackJsonp_VueMicroApp 即可
+      jsonpFunction: `webpackJsonp_VueMicroApp`,
+    }
+  }
+}
+```
+这里重点关注一下`output`选项，当我们把`libraryTarget`设置为`umd`后，我们的`library`就暴露为所有的模块定义下都可以运行的方式，主应用就可以获取到微应用的生命周期钩子函数了。
+
+在`vue.config.js`修改完成后，重新启动主应用基座，即可正确加载Vue微应用。
+
+---
+
+**踩坑：**
+![image.png](https://cdn.nlark.com/yuque/0/2022/png/25548832/1643102681791-26d8d980-1c2b-4b96-a222-1642e78c818a.png#clientId=uda88a878-0af7-4&from=paste&height=291&id=u29e2db38&name=image.png&originHeight=187&originWidth=363&originalType=binary&ratio=1&rotation=0&showTitle=false&size=11061&status=done&style=none&taskId=uab415f98-3c54-44af-86c5-f50cfa81045&title=&width=564.5)
+**微应用入口脚本文件必须是最后一个，**qiankun通过最后一个script文件拿到qiankun的生命周期，如果不是最后一个就会导致最终报错vue子应用
+
+# 接入React微应用
+首先通过`create-react-app`创建一个`React`的项目
+
+在项目创建完成后，我们在根目录下添加`.env`文件，设置项目监听的端口，
+```typescript
+# micro-app-react/.env
+PORT=10100
+BROWSER=none
+```
+然后，我们创建几个路由页面在加上样式
+## 注册微应用
+在创建好`React`微应用后，我们可以开始我们的接入工作了。首先我们需要在主应用中注册该微应用的信息，
+```typescript
+// micro-app-main/src/micro/apps.ts
+const apps = [
+  /**
+   * name: 微应用名称 - 具有唯一性
+   * entry: 微应用入口 - 通过该地址加载微应用
+   * container: 微应用挂载节点 - 微应用加载完成后将挂载在该节点上
+   * activeRule: 微应用触发的路由规则 - 触发路由规则后将加载该微应用
+   */
+  {
+    name: "ReactMicroApp",
+    entry: "//localhost:10100",
+    container: "#frame",
+    activeRule: "/react",
+  },
+];
+
+export default apps;
+
+```
+通过以上代码，我们就在主应用中注册了我们的`React`微应用，进入`/react`路由时将加载我们的`React`微应用。
+我们在菜单配置处也加入`React`微应用的快捷入口，
+```typescript
+// micro-app-main/src/App.vue
+//...
+export default class App extends Vue {
+  /**
+   * 菜单列表
+   * key: 唯一 Key 值
+   * title: 菜单标题
+   * path: 菜单对应的路径
+   */
+  menus = [
+    {
+      key: "Home",
+      title: "主页",
+      path: "/",
+    },
+    {
+      key: "ReactMicroApp",
+      title: "React 主页",
+      path: "/react",
+    },
+    {
+      key: "ReactMicroAppList",
+      title: "React 列表页",
+      path: "/react/list",
+    },
+  ];
+}
+
+```
+## 配置微应用
+在主应用注册好了微应用之后，我们还需要对微应用进行一系列的配置。首先，我们在`React`的入口文件`index.js`中，导出`qiankun`主应用需要的三个生命周期钩子函数
+```javascript
+import React from "react";
+import ReactDOM from "react-dom";
+import "antd/dist/antd.css";
+
+import "./public-path";
+import App from "./App.jsx";
+
+/**
+ * 渲染函数
+ * 两种情况：主应用生命周期钩子中运行 / 微应用单独启动时运行
+ */
+function render() {
+  ReactDOM.render(<App />, document.getElementById("root"));
+}
+
+// 独立运行时，直接挂载应用
+if (!window.__POWERED_BY_QIANKUN__) {
+  render();
+}
+
+/**
+ * bootstrap 只会在微应用初始化的时候调用一次，下次微应用重新进入时会直接调用 mount 钩子，不会再重复触发 bootstrap。
+ * 通常我们可以在这里做一些全局变量的初始化，比如不会在 unmount 阶段被销毁的应用级别的缓存等。
+ */
+export async function bootstrap() {
+  console.log("ReactMicroApp bootstraped");
+}
+
+/**
+ * 应用每次进入都会调用 mount 方法，通常我们在这里触发应用的渲染方法
+ */
+export async function mount(props) {
+  console.log("ReactMicroApp mount", props);
+  render(props);
+}
+
+/**
+ * 应用每次 切出/卸载 会调用的方法，通常在这里我们会卸载微应用的应用实例
+ */
+export async function unmount() {
+  console.log("ReactMicroApp unmount");  
+  ReactDOM.unmountComponentAtNode(document.getElementById("root"));
+}
+
+if (process.env.NODE_ENV === "development") {
+  window["ReactMicroApp"] = {};
+  window["ReactMicroApp"].bootstrap = bootstrap;
+  window["ReactMicroApp"].mount = mount;
+  window["ReactMicroApp"].unmount = unmount;
+}
+```
+
+- **第5行 :**`webpack`默认的`publicPath`为`""`空字符串，会基于当前路径来加载资源。我们在主应用中加载微应用时需要重新设置`publicPath`，这样才能正确加载微应用的相关资源（public-path.js的具体实现在后面）
+- **第12行 :** 微应用挂载函数，在主应用中运行时将在`mount`生命周期钩子函数中调用，可以保证在沙箱内运行
+- **第17行 :** 微应用独立运行时，直接执行`render`函数挂载微应用
+- **第25行 :** 微应用导出的生命周期钩子函数 - `bootstrap`
+- **第32行 :** 微应用导出的生命周期钩子函数 - `mount`
+- **第40行 :** 微应用导出的生命周期钩子函数 - `unmounted`
+
+在配置好了入口文件`index.js`后，还需要配置路由命名空间，以确保主应用可以正确加载微应用，
+```jsx
+// micro-app-react/src/App.jsx
+const BASE_NAME = window.__POWERED_BY_QIANKUN__ ? "/react" : "";
+const App = () => {
+  //...
+
+  return (
+    // 设置路由命名空间
+    <Router basename={BASE_NAME}>{/* ... */}</Router>
+  );
+};
+
+```
+接下来，我们还需要配置webpack，使index.js导出的生命周期钩子函数可以被qiankun识别获取。
+这样，需要借助react-app-rewired来帮助我们修改webpack的配置，我们直接安装该插件
+```typescript
+// npm
+npm install react-app-rewired
+// yarn
+yarn add react-app-rewired
+```
+在插件安装完成后，还需要修改`package.js`的`scripts`选项，修改为由`react-app-rewired`启动应用，
+```json
+// micro-app-react/package.json
+
+//...
+"scripts": {
+  "start": "react-app-rewired start",
+  "build": "react-app-rewired build",
+  "test": "react-app-rewired test",
+  "eject": "react-app-rewired eject"
+}
+
+```
+在`react-app-rewired`配置完成后，新建`config-overrides.js`文件来配置`webpack`，
+```javascript
+const path = require("path");
+
+module.exports = {
+  webpack: (config) => {
+    // 微应用的包名，这里与主应用中注册的微应用名称一致
+    config.output.library = `ReactMicroApp`;
+    // 将你的 library 暴露为所有的模块定义下都可运行的方式
+    config.output.libraryTarget = "umd";
+    // 按需加载相关，设置为 webpackJsonp_VueMicroApp 即可
+    config.output.jsonpFunction = `webpackJsonp_ReactMicroApp`;
+
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@": path.resolve(__dirname, "src"),
+    };
+    return config;
+  },
+
+  devServer: function (configFunction) {
+    return function (proxy, allowedHost) {
+      const config = configFunction(proxy, allowedHost);
+      // 关闭主机检查，使微应用可以被 fetch
+      config.disableHostCheck = true;
+      // 配置跨域请求头，解决开发环境的跨域问题
+      config.headers = {
+        "Access-Control-Allow-Origin": "*",
+      };
+      // 配置 history 模式
+      config.historyApiFallback = true;
+
+      return config;
+    };
+  },
+};
+
+```
+这里需要重点关注`output`选项，当我们把`libraryTarget`设置为`umd`后，我们的`library`就暴露为所有的模块定义下都可运行的方式了，主应用就可以获取到微应用的生命周期钩子函数了
+
+在`config-overrides.js`修改完成后，我们重新启动`React`微应用，然后打开主应用基座，点击切换到`React`微应用，这时就可以正确被加载了。
