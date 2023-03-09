@@ -3,6 +3,7 @@ import {
   GithubOutlined,
   WechatOutlined,
   MailOutlined,
+  ArrowRightOutlined,
 } from "@ant-design/icons";
 
 const Header = () => {
@@ -13,8 +14,12 @@ const Header = () => {
           <span>Home Page</span>
           <div>
             <div>
-              <span>→</span>
-              <span>→</span>
+              <span>
+                <ArrowRightOutlined />
+              </span>
+              <span>
+                <ArrowRightOutlined />
+              </span>
             </div>
           </div>
         </div>
@@ -32,6 +37,10 @@ const Header = () => {
           </span>
         </div>
         <div className={styles.brief}>
+          <div className={styles.briefItem} style={{ marginRight: 10 }}>
+            <span>Jingshuang</span>
+            <div>Sun</div>
+          </div>
           <div className={styles.briefItem}>
             <span>Portfolio</span>
             <div>120+</div>
