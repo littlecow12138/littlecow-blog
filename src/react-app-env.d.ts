@@ -10,6 +10,7 @@
 /// <reference types="three/examples/jsm/loaders/GLTFLoader" />
 /// <reference types="@mdx-js/react" />
 /// <reference types="react-use-gesture" />
+/// <reference types="@antv/x6" />
 
 // declare module "three/examples/jsm/loaders/GLTFLoader";
 

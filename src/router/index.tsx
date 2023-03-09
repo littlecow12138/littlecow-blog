@@ -1,6 +1,7 @@
 import { RouteObject } from "react-router-dom";
-import IndexPage from "../pages/layout/index";
-import Layout from "../pages/index";
+import IndexPage from "../pages/layout1/index";
+import Layout from "../pages/layout";
+import MyPage from "../pages/my";
 
 const routes: RouteObject[] = [
   {
@@ -11,6 +12,10 @@ const routes: RouteObject[] = [
     path: "/index",
     element: <IndexPage />,
   },
+  // {
+  //   path: "layout",
+  //   element: <Layou />
+  // }
 ];
 
 export default routes;
